@@ -36,120 +36,13 @@ else:
 此逻辑确保系统能够依据用户的命令行输入，准确执行相应的操作。
 
 #### 2. 核心功能模块开发与代码优化
-- **`MaskedStego` 类实现**：在 `masked_stego.py` 中开发了 `MaskedStego` 类，该类实现了消息的编码和解码核心逻辑。以下是部分关键代码：
-```python
-class MaskedStego:
-    def __init__(self):
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-        self.model = BertForMaskedLM.from_pretrained('bert-base-uncased')
-
-    def __call__(self, cover_text, message, mask_interval, score_threshold):
-        # 编码逻辑实现
-        pass
-
-    def decode(self, encoded_text, mask_interval, score_threshold):
-        # 解码逻辑实现
-        pass
-
-    def _preprocess_text(self, text):
-        # 文本预处理逻辑
-        pass
-
-    def _mask(self, text, mask_interval):
-        # 掩码操作逻辑
-        pass
-
-    def _predict(self, text):
-        # 模型预测逻辑
-        pass
-```
+- **`MaskedStego` 类实现**：在 `masked_stego.py` 中开发了 `MaskedStego` 类，该类实现了消息的编码和解码核心逻辑。
 在编码过程中，将消息转换为二进制字符串，通过掩码操作和模型预测选择合适的候选词嵌入消息，同时记录编码时间和消息嵌入容量；解码时，从编码文本中提取二进制消息并转换为文本，记录解码时间和消息检索效率。
 - **辅助方法优化**：对 `_preprocess_text`、`_mask`、`_predict` 等辅助方法进行了优化，提高了文本预处理和模型预测的效率和准确性。例如，在 `_preprocess_text` 方法中，采用更高效的分词和清洗策略，减少不必要的计算开销。
 
 #### 3. Web 服务与前端交互代码开发
-- **Flask 框架搭建 Web 服务**：使用 Flask 框架在 `app.py` 中搭建 Web 服务，设计了 `/generate_text`、`/encode` 和 `/decode` 三个 API 接口，以下是部分代码示例：
-```python
-from flask import Flask, request, jsonify
-app = Flask(__name__)
-
-@app.route('/generate_text', methods=['POST'])
-def generate_text():
-    data = request.get_json()
-    prompt = data.get('prompt')
-    # 调用生成文本的函数
-    result = generate_text_gpt2(prompt)
-    return jsonify({'text': result})
-
-@app.route('/encode', methods=['POST'])
-def encode():
-    data = request.get_json()
-    text = data.get('text')
-    message = data.get('message')
-    # 调用编码函数
-    encoded_text = masked_stego(text, message)
-    return jsonify({'encoded_text': encoded_text})
-
-@app.route('/decode', methods=['POST'])
-def decode():
-    data = request.get_json()
-    encoded_text = data.get('encoded_text')
-    # 调用解码函数
-    decoded_message = masked_stego.decode(encoded_text)
-    return jsonify({'decoded_message': decoded_message})
-
-if __name__ == '__main__':
-    app.run(debug=True)
-```
-这些接口分别处理文本生成、编码和解码请求，实现了前后端的数据交互。
-- **前端页面与交互代码实现**：开发前端页面 `index.html`，使用 HTML、CSS 和 JavaScript 设计用户界面，提供文本输入框、按钮和结果显示区域，实现文件上传和保存功能。以下是部分 JavaScript 代码示例，用于与后端 API 交互：
-```javascript
-function generateText() {
-    const prompt = document.getElementById('prompt').value;
-    fetch('/generate_text', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ prompt: prompt })
-    })
-   .then(response => response.json())
-   .then(data => {
-        document.getElementById('generated-text').innerHTML = data.text;
-    });
-}
-
-function encodeMessage() {
-    const text = document.getElementById('text').value;
-    const message = document.getElementById('message').value;
-    fetch('/encode', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ text: text, message: message })
-    })
-   .then(response => response.json())
-   .then(data => {
-        document.getElementById('encoded-text').innerHTML = data.encoded_text;
-    });
-}
-
-function decodeMessage() {
-    const encodedText = document.getElementById('encoded-text').value;
-    fetch('/decode', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ encoded_text: encodedText })
-    })
-   .then(response => response.json())
-   .then(data => {
-        document.getElementById('decoded-message').innerHTML = data.decoded_message;
-    });
-}
-```
-通过这些代码，实现了前端页面与后端 API 的交互，用户可以方便地进行文本生成、编码和解码操作。
+- **Flask 框架搭建 Web 服务**：使用 Flask 框架在 `app.py` 中搭建 Web 服务，设计了 `/generate_text`、`/encode` 和 `/decode` 三个 API 接口
+实现了前端页面与后端 API 的交互，用户可以方便地进行文本生成、编码和解码操作。
 
 ##注意事项
 在使用编码功能时，要确保输入的二进制消息由 0 和 1 组成。
