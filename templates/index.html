@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generative - Covert Comm System</title>
+    <style>
+        /* 全局样式 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 标题样式 */
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #555;
+            margin-top: 20px;
+        }
+
+        /* 文本框样式 */
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            resize: vertical;
+        }
+
+        /* 输入框样式 */
+        input[type="number"] {
+            width: 100px;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        /* 文件上传按钮样式 */
+        input[type="file"] {
+            margin-bottom: 15px;
+        }
+
+        /* 按钮样式 */
+        button {
+            padding: 12px 25px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        /* 结果显示区域样式 */
+        #encode-result,
+        #decode-result,
+        #generated-text-result {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+        }
+
+        /* 编码和解码区域的容器样式 */
+        .encode-decode-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            width: 80%;
+        }
+
+        .encode-section,
+        .decode-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Generative - Covert Comm System</h1>
+
+    <!-- 生成文本区域 -->
+      <!-- 
+    <div>
+        <h2>Generate Text with GPT-2</h2>
+        <textarea id="gpt2-prompt" placeholder="输入GPT-2的提示文本"></textarea>
+        <input type="number" id="gpt2-max-length" value="100" placeholder="最大长度">
+        <button onclick="generateTextGPT2()">生成文本</button>
+    </div>
+-->
+    <div class="encode-decode-container">
+        <!-- 编码区域 -->
+        <div class="encode-section">
+            <h2>Generate Text with GPT-2</h2>
+        <textarea id="gpt2-prompt" placeholder="输入GPT-2的提示文本"></textarea>
+        <input type="number" id="gpt2-max-length" value="100" placeholder="最大长度">
+        <button onclick="generateTextGPT2()">生成文本</button>
+            <h2></h2>
+            <input type="file" id="cover_text_file" accept=".txt" onchange="loadFile('cover_text_file', 'cover_text')">
+            <textarea id="cover_text" placeholder="生成文本结果"></textarea>
+            <textarea id="message" placeholder="输入嵌入的英语文本"></textarea>
+            <input type="number" id="mask_interval" value="3" placeholder="掩码间隔">
+            <input type="number" id="score_threshold" value="0.005" step="0.001" placeholder="分数阈值">
+            <button onclick="encode()">编码</button>
+            <button onclick="saveEncodedText()">保存编码文本</button>
+        </div>
+
+        <!-- 解码区域 -->
+        <div class="decode-section">
+            <h2>Decode</h2>
+            <input type="file" id="stego_text_file" accept=".txt" onchange="loadFile('stego_text_file', 'stego_text')">
+            <textarea id="stego_text" placeholder="输入待解码的文本"></textarea>
+            <input type="number" id="decode_mask_interval" value="3" placeholder="掩码间隔">
+            <input type="number" id="decode_score_threshold" value="0.005" step="0.001" placeholder="分数阈值">
+            <button onclick="decode()">解码</button>
+        </div>
+    </div>
+
+    <h2>编码结果</h2>
+    <pre id="encode-result"></pre>
+
+    <h2>解码结果</h2>
+    <pre id="decode-result"></pre>
+
+    <h2>生成文本结果</h2>
+    <pre id="generated-text-result"></pre>
+
+    <script>
+        // 加载文件内容到文本框
+        function loadFile(inputId, textareaId) {
+            const fileInput = document.getElementById(inputId);
+            const textarea = document.getElementById(textareaId);
+            const file = fileInput.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    textarea.value = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function encode() {
+            const cover_text = document.getElementById('cover_text').value;
+            const message = document.getElementById('message').value;
+            const mask_interval = document.getElementById('mask_interval').value;
+            const score_threshold = document.getElementById('score_threshold').value;
+
+            fetch('/encode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    cover_text,
+                    message,
+                    mask_interval,
+                    score_threshold
+                })
+            })
+           .then(response => response.json())
+           .then(data => {
+                let resultText = `消息嵌入容量: ${data.message_capacity} bits\n`;
+                resultText += `编码时间: ${data.encoding_time.toFixed(4)} 秒\n`;
+                resultText += `编码后的文本: ${data.stego_text}\n`;
+                resultText += `编码后的消息: ${data.encoded_message}`;
+                document.getElementById('encode-result').textContent = resultText;
+            })
+           .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('encode-result').textContent = '编码出错：' + error.message;
+            });
+        }
+
+        function decode() {
+            const stego_text = document.getElementById('stego_text').value;
+            const mask_interval = document.getElementById('decode_mask_interval').value;
+            const score_threshold = document.getElementById('decode_score_threshold').value;
+
+            fetch('/decode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    stego_text,
+                    mask_interval,
+                    score_threshold
+                })
+            })
+           .then(response => response.json())
+           .then(data => {
+                let resultText = `解码后的消息: ${data.decoded_message}\n`;
+                resultText += `解码时间: ${data.decoding_time.toFixed(4)} 秒\n`;
+                resultText += `消息检索效率: ${data.retrieval_efficiency.toFixed(2)} bits/秒\n`;
+                //resultText += `消息检测率: ${(data.message_detection_rate * 100).toFixed(2)}%\n`;
+                //resultText += `误报率: ${(data.false_alarm_rate * 100).toFixed(2)}%`;
+                document.getElementById('decode-result').textContent = resultText;
+            })
+           .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('decode-result').textContent = '解码出错：' + error.message;
+            });
+        }
+
+        // 保存编码后的文本到本地txt文件
+        function saveEncodedText() {
+            const encodeResult = document.getElementById('encode-result').textContent;
+            const startIndex = encodeResult.indexOf('编码后的文本: ') + '编码后的文本: '.length;
+            const endIndex = encodeResult.indexOf('\n', startIndex);
+            if (startIndex!== -1 && endIndex!== -1) {
+                const encodedText = encodeResult.slice(startIndex, endIndex);
+                const blob = new Blob([encodedText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'encoded_text.txt';
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        // 生成文本函数
+        function generateTextGPT2() {
+            const prompt = document.getElementById('gpt2-prompt').value;
+            const max_length = document.getElementById('gpt2-max-length').value;
+
+            fetch('/generate_text', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    prompt,
+                    max_length
+                })
+            })
+           .then(response => response.json())
+           .then(data => {
+                const generatedText = data.generated_text;
+                document.getElementById('generated-text-result').textContent = generatedText;
+                // 将生成的文本赋值给编码区域的 cover_text 文本框
+                document.getElementById('cover_text').value = generatedText;
+            })
+           .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('generated-text-result').textContent = '生成文本出错：' + error.message;
+            });
+        }
+    </script>
+</body>
+
+</html>
